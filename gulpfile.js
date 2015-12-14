@@ -5,7 +5,11 @@ var gulp = require('gulp')
  
 // task
 gulp.task('build', function () {
-    gulp.src('./src/*.js')
+    gulp.src([
+        './src/zip.js',
+        './src/deflate.js',
+        './src/scraper.js',
+    ])
     .pipe(concat("script.js"))
     .pipe(uglify())
     .pipe(gulp.dest('build'));

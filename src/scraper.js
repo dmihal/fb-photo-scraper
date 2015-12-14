@@ -2,16 +2,24 @@ zip.useWebWorkers=false;
 zip.createWriter(new zip.BlobWriter("application/zip"), function(zipWriter) {
   var thumbs = document.querySelectorAll('.uiMediaThumbMedium');
   var imagePromises = [];
-  for (var i=0; i<thumbs.length; i++) {
-    var ajaxify_str = decodeURIComponent(thumbs[i].attributes.getNamedItem('ajaxify').value);
-    var url = ajaxify_str.substr(ajaxify_str.indexOf('src=')+4);
-    imagePromises.push(new Promise(function(resolve, reject){
+
+  var loadUrl = function (url){
+    var promise = new Promise(function(resolve, reject){
       urlToDataUrl(url).then(function(dataUrl){
-        zipWriter.add("filename", new zip.Data64URIReader(dataUrl), function(){
+        var filename = url.match(/\w+\.jpg/)[0];
+        zipWriter.add(filename, new zip.Data64URIReader(dataUrl), function(){
           resolve();
         });
       });
-    }));
+    });
+    return promise;
+  };
+
+  for (var i=0; i<thumbs.length; i++) {
+    var ajaxify_str = decodeURIComponent(thumbs[i].attributes.getNamedItem('ajaxify').value);
+    var url = ajaxify_str.substr(ajaxify_str.indexOf('src=')+4);
+    var promise = loadUrl(url);
+    imagePromises.push(promise);
   }
   Promise.all(imagePromises).then(function(){
     zipWriter.close(function(blob){
@@ -22,6 +30,8 @@ zip.createWriter(new zip.BlobWriter("application/zip"), function(zipWriter) {
 }, function(err){
   console.error(err);
 });
+
+
 
 function urlToDataUrl(url){
   var promise = new Promise(function(resolve, reject){
